@@ -1,6 +1,3 @@
-import { iteratePaginatedAPI } from "@notionhq/client"
-import { NotionService } from "../services/notion"
-
 // Take rich text array from a block child that supports rich text and return the plain text.
 // Note: All rich text objects include a plain_text field.
 export const getPlainTextFromRichText = richText => {

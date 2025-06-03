@@ -1,54 +1,11 @@
 import { Client, UserObjectResponse } from "@notionhq/client"
 import { z } from "zod"
 import { iteratePaginatedAPI } from "@notionhq/client"
-import { User } from "@grammyjs/types"
-
-// Zod schemas for Notion API responses
-const NotionRichTextSchema = z.object({
-  type: z.string(),
-  text: z
-    .object({
-      content: z.string()
-    })
-    .optional(),
-  plain_text: z.string()
-})
-
-const NotionPropertySchema = z.object({
-  id: z.string(),
-  type: z.string(),
-  title: z.array(NotionRichTextSchema).optional(),
-  rich_text: z.array(NotionRichTextSchema).optional()
-})
-
-const NotionPageSchema = z.object({
-  id: z.string(),
-  properties: z.record(z.string(), NotionPropertySchema),
-  url: z.string(),
-  created_time: z.string(),
-  last_edited_time: z.string()
-})
-
-const NotionBlockContentSchema = z.object({
-  rich_text: z.array(NotionRichTextSchema)
-})
-
-const NotionBlockSchema = z.object({
-  id: z.string(),
-  type: z.string(),
-  paragraph: NotionBlockContentSchema.optional(),
-  heading_1: NotionBlockContentSchema.optional(),
-  heading_2: NotionBlockContentSchema.optional(),
-  heading_3: NotionBlockContentSchema.optional(),
-  bulleted_list_item: NotionBlockContentSchema.optional(),
-  numbered_list_item: NotionBlockContentSchema.optional()
-})
-
-const NotionDatabaseQuerySchema = z.object({
-  results: z.array(NotionPageSchema),
-  next_cursor: z.string().nullable(),
-  has_more: z.boolean()
-})
+import {
+  NotionPageSchema,
+  NotionBlockSchema,
+  NotionDatabaseQuerySchema
+} from "../types/notion"
 
 // Infer TypeScript types from Zod schemas
 export type NotionPage = z.infer<typeof NotionPageSchema>
@@ -76,17 +33,23 @@ export class NotionService {
    * @param databaseId - The ID of the Notion database
    * @returns Array of pages from the database
    */
-  async queryDatabase(databaseId: string): Promise<NotionPage[]> {
+  async queryDatabase(databaseId: string): Promise<{
+    pages: NotionPage[]
+    error: string | null
+  }> {
     try {
+      if (!databaseId.trim()) {
+        return { pages: [], error: "Database ID cannot be empty" }
+      }
+
       const response = await this.client.databases.query({
         database_id: databaseId
       })
 
-      const validatedResponse = NotionDatabaseQuerySchema.parse(response)
-      return validatedResponse.results
+      return { pages: response.results as NotionPage[], error: null }
     } catch (error) {
-      console.error("Error querying Notion database:", error)
-      throw new Error("Failed to query Notion database")
+      console.error("Failed to query database:", error)
+      return { pages: [], error: "Failed to query Notion database" }
     }
   }
 
@@ -109,8 +72,15 @@ export class NotionService {
    * @param pageId - The ID of the Notion page
    * @returns The page content as formatted text
    */
-  async getPageContent(pageId: string): Promise<string | undefined> {
+  async getPageContent(pageId: string): Promise<{
+    content: string
+    error: string | null
+  }> {
     try {
+      if (!pageId.trim()) {
+        return { content: "", error: "Page ID cannot be empty" }
+      }
+
       console.log("Fetching blocks for page:", pageId)
       const blocks = await this.client.blocks.children.list({
         block_id: pageId
@@ -118,7 +88,7 @@ export class NotionService {
 
       if (!blocks.results || blocks.results.length === 0) {
         console.log("No blocks found for page:", pageId)
-        return "This page appears to be empty."
+        return { content: "This page appears to be empty.", error: null }
       }
 
       console.log("Found blocks:", blocks.results.length)
@@ -133,19 +103,10 @@ export class NotionService {
         }
       }
 
-      return content.trim()
+      return { content: content.trim(), error: null }
     } catch (error) {
-      console.error("Error getting Notion page content:", error)
-      if (error instanceof Error) {
-        if (error.message === "unauthorized") {
-          throw new Error(
-            "Not authorized to access this page. Please ensure the page is shared with your integration."
-          )
-        } else if (error.message === "object_not_found") {
-          throw new Error("Page not found. Please check the page ID.")
-        }
-        throw new Error("Failed to get page content")
-      }
+      console.error("Failed to get page content:", error)
+      return { content: "", error: "Failed to retrieve page content" }
     }
   }
 
@@ -154,19 +115,27 @@ export class NotionService {
    * @param query - The search query
    * @returns Array of matching pages
    */
-  async searchPages(query: string): Promise<NotionPage[]> {
+  async searchPages(query: string): Promise<{
+    pages: NotionPage[]
+    error: string | null
+  }> {
     try {
+      if (!query.trim()) {
+        return { pages: [], error: "Search query cannot be empty" }
+      }
+
       const response = await this.client.search({
-        query
+        query,
+        filter: {
+          property: "object",
+          value: "page"
+        }
       })
 
-      console.log("results", response.results)
-      return response.results
-        .filter((result: any) => result.object === "page")
-        .map((page: any) => NotionPageSchema.parse(page))
+      return { pages: response.results as NotionPage[], error: null }
     } catch (error) {
-      console.error("Error searching Notion pages:", error)
-      throw new Error("Failed to search pages")
+      console.error("Search failed:", error)
+      return { pages: [], error: "Failed to search Notion pages" }
     }
   }
 
@@ -175,8 +144,15 @@ export class NotionService {
    * @param pageId - The ID of the Notion page
    * @returns Formatted page summary
    */
-  async getPageSummary(pageId: string): Promise<string> {
+  async getPageSummary(pageId: string): Promise<{
+    summary: string
+    error: string | null
+  }> {
     try {
+      if (!pageId.trim()) {
+        return { summary: "", error: "Page ID cannot be empty" }
+      }
+
       // Get page details
       const page = await this.client.pages.retrieve({ page_id: pageId })
       const validatedPage = NotionPageSchema.parse(page)
@@ -206,10 +182,10 @@ export class NotionService {
         }
       }
 
-      return summary.trim()
+      return { summary: summary.trim(), error: null }
     } catch (error) {
-      console.error("Error getting Notion page summary:", error)
-      throw new Error("Failed to get page summary")
+      console.error("Failed to get page summary:", error)
+      return { summary: "", error: "Failed to retrieve page summary" }
     }
   }
 
