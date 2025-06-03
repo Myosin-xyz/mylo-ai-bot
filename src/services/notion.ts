@@ -1,4 +1,4 @@
-import { Client, UserObjectResponse } from "@notionhq/client"
+import { Client } from "@notionhq/client"
 import { z } from "zod"
 import { iteratePaginatedAPI } from "@notionhq/client"
 import {
@@ -57,7 +57,7 @@ export class NotionService {
    * Get all users from Notion
    * @returns Array of Notion users
    */
-  async getUsers(): Promise<UserObjectResponse[]> {
+  async getUsers(): Promise<any[]> {
     try {
       const listUsersResponse = await this.client.users.list({})
       return listUsersResponse.results
