@@ -1,11 +1,13 @@
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      TELEGRAM_TOKEN: string;
-      NODE_ENV?: "development" | "production";
-      PORT?: number;
+      NODE_ENV: "development" | "production"
+      PORT?: string
+      PWD: string
+      TELEGRAM_TOKEN: string
+      NOTION_TOKEN: string
     }
   }
 }
 
-export {};
+export {}
