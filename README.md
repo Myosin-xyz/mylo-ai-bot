@@ -152,3 +152,33 @@ We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for:
 ## License
 
 MIT - Feel free to use this bot as a starting point for your own projects!
+
+## Natural Language Search
+
+Mylo now supports natural language search! Simply start your message with "Hey Mylo" (case insensitive) and ask for what you need:
+
+### Examples:
+
+- "Hey Mylo, search for project proposals"
+- "HEY MYLO look for meeting notes"
+- "hey mylo, please search for available proposals"
+- "hey mylo i need to find team documents"
+- "hey mylo help me find project plans"
+
+### How it works:
+
+1. **Trigger Detection**: Messages starting with "Hey Mylo" (case insensitive) activate the search
+2. **Query Extraction**: The bot intelligently extracts search terms using semantic parsing
+3. **Notion Search**: Uses the existing Notion search API to find relevant pages
+4. **Smart Responses**: Returns formatted results with page titles, links, and access commands
+
+### Supported Patterns:
+
+- `search for [query]`
+- `find [query]`
+- `look for [query]`
+- `can you search for [query]`
+- `please find [query]`
+- `i need to find [query]`
+- `help me find [query]`
+- Direct keywords (e.g., "hey mylo search Latam proposals")

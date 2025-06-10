@@ -2,6 +2,7 @@ import { Bot, Context, session, SessionFlavor, webhookCallback } from "grammy"
 import express from "express"
 import { registerAllCommands } from "./commands"
 import { NotionService } from "./services/notion"
+import { handleMyloMessage } from "./utils/messageHandler"
 
 // This is the data that will be saved per chat.
 export interface SessionData {
@@ -23,6 +24,16 @@ const notion = new NotionService()
 // Count messages
 bot.on("message", async (ctx, next) => {
   ctx.session.messageCount++
+
+  // Check if message starts with "Hey Mylo" (case insensitive)
+  if (ctx.message?.text) {
+    const messageText = ctx.message.text.toLowerCase().trim()
+    if (messageText.startsWith("hey mylo")) {
+      await handleMyloMessage(ctx, notion, messageText)
+      return // Don't continue to next middleware
+    }
+  }
+
   await next()
 })
 
