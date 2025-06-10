@@ -1,4 +1,4 @@
-import { AirtableService } from "./services/airtable"
+import { AirtableService } from "../services/airtable"
 import { config } from "dotenv"
 
 // Load environment variables

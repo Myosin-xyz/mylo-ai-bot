@@ -2,6 +2,8 @@ import { Bot, Context, session, SessionFlavor, webhookCallback } from "grammy"
 import express from "express"
 import { registerAllCommands } from "./commands"
 import { NotionService } from "./services/notion"
+import { AirtableService } from "./services/airtable"
+import { EarningsService } from "./services/earnings"
 import { handleMyloMessage } from "./utils/messageHandler"
 
 // This is the data that will be saved per chat.
@@ -18,8 +20,20 @@ export const bot = new Bot<MyContext>(process.env.TELEGRAM_TOKEN || "")
 // Initialize session middleware
 bot.use(session({ initial: () => ({ messageCount: 0 }) }))
 
-// Initialize Notion service
+// Initialize services
 const notion = new NotionService()
+let airtable: AirtableService | null = null
+let earnings: EarningsService | null = null
+
+try {
+  airtable = new AirtableService()
+  earnings = new EarningsService(airtable)
+} catch (error) {
+  console.warn(
+    "Airtable service not available:",
+    error instanceof Error ? error.message : error
+  )
+}
 
 // Count messages
 bot.on("message", async (ctx, next) => {
@@ -29,7 +43,7 @@ bot.on("message", async (ctx, next) => {
   if (ctx.message?.text) {
     const messageText = ctx.message.text.toLowerCase().trim()
     if (messageText.startsWith("hey mylo")) {
-      await handleMyloMessage(ctx, notion, messageText)
+      await handleMyloMessage(ctx, notion, earnings, messageText)
       return // Don't continue to next middleware
     }
   }
@@ -38,7 +52,12 @@ bot.on("message", async (ctx, next) => {
 })
 
 // Register all commands
-registerAllCommands(bot, notion)
+if (airtable) {
+  registerAllCommands(bot, notion, airtable)
+} else {
+  // Register commands without Airtable if service is not available
+  registerAllCommands(bot, notion, null as any)
+}
 
 // Catch errors and log them
 bot.catch(err => console.error(err))

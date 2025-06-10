@@ -8,8 +8,9 @@
     "start": "node dist/bot.js",
     "dev": "env-cmd ts-node-dev src/bot.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "test:notion": "env-cmd ts-node src/test-notion.ts",
-    "test:airtable": "env-cmd ts-node src/test-airtable.ts"
+    "test:notion": "env-cmd ts-node src/tests/test-notion.ts",
+    "test:airtable": "env-cmd ts-node src/tests/test-airtable.ts",
+    "test:earnings": "env-cmd ts-node src/tests/test-earnings.ts"
   },
   "repository": {
     "type": "git",

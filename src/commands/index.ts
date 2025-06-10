@@ -2,15 +2,19 @@ import { Bot } from "grammy"
 import { MyContext } from "../types/commands"
 import { registerBasicCommands } from "./basic"
 import { registerNotionCommands } from "./notion"
+import { registerAirtableCommands } from "./airtable"
 import { NotionService } from "../services/notion"
+import { AirtableService } from "../services/airtable"
 
 export const registerAllCommands = (
   bot: Bot<MyContext>,
-  notion: NotionService
+  notion: NotionService,
+  airtable: AirtableService
 ) => {
   // Register all command handlers
   registerBasicCommands(bot)
   registerNotionCommands(bot, notion)
+  registerAirtableCommands(bot, airtable)
 
   // Update bot commands list
   bot.api.setMyCommands([
@@ -45,6 +49,14 @@ export const registerAllCommands = (
     {
       command: "about",
       description: "Learn about this bot"
+    },
+    {
+      command: "table",
+      description: "Get summary of an Airtable table"
+    },
+    {
+      command: "filter",
+      description: "Search Airtable records with filter"
     }
   ])
 }

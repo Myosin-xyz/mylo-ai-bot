@@ -5,7 +5,7 @@
  * Run with: npx ts-node src/test-notion.ts
  */
 
-import { NotionService } from "./services/notion"
+import { NotionService } from "../services/notion"
 import { useNotion } from "./hooks/useNotion"
 
 async function testNotionIntegration() {
